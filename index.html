@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shattered Spines Level Designer</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; background-color: black; color: white; }
+        #toolbar { margin-bottom: 10px; }
+        .tile-btn { width: 40px; height: 40px; margin: 5px; cursor: pointer; border: 2px solid white; background-size: cover; }
+        #grid-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+            position: relative;
+        }
+        #grid { 
+            display: grid; 
+            grid-template-columns: repeat(40, 32px); 
+            grid-template-rows: repeat(30, 32px);
+            background-color: black;
+            position: relative;
+        }
+        .cell { 
+            width: 32px; 
+            height: 32px; 
+            border: 1px solid gray; 
+            background-color: black; 
+            background-size: cover;
+        }
+        #preview {
+            position: absolute;
+            width: 32px;
+            height: 32px;
+            pointer-events: none;
+            opacity: 0.5;
+            background-size: cover;
+            transform-origin: center;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Shattered Spines Level Designer</h2>
+    <p>Press <b>R</b> to rotate the selected tile</p>
+
+    <div id="toolbar">
+        <button class="tile-btn" style="background-image: url('tiles/wall.png');" onclick="setTile('wall')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/platform.png');" onclick="setTile('platform')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/spike.png');" onclick="setTile('spike')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/spawn.png');" onclick="setTile('spawn')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/flag.png');" onclick="setTile('flag')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/double_jump.png');" onclick="setTile('double_jump')"></button>
+        <button class="tile-btn" style="background-image: url('tiles/slope.png');" onclick="setTile('slope')"></button>
+        <button class="tile-btn" style="background-color: white; border: 2px dashed black;" onclick="setTile('empty')">Erase</button>
+    </div>
+
+    <div id="grid-container">
+        <div id="grid"></div>
+        <div id="preview"></div>
+    </div>
+    
+    <br>
+    <button onclick="downloadImage()">Download Image</button>
+
+    <script>
+        const gridWidth = 40, gridHeight = 30;
+        let selectedTile = 'wall';
+        let rotation = 0;
+        let isMouseDown = false;
+
+        const tileImages = {
+            wall: 'tiles/wall.png',
+            platform: 'tiles/platform.png',
+            spike: 'tiles/spike.png',
+            spawn: 'tiles/spawn.png',
+            flag: 'tiles/flag.png',
+            double_jump: 'tiles/double_jump.png',
+            slope: 'tiles/slope.png',
+            empty: ''
+        };
+
+        const grid = document.getElementById("grid");
+        const preview = document.getElementById("preview");
+
+        function setTile(type) {
+            selectedTile = type;
+            preview.style.backgroundImage = `url('${tileImages[selectedTile]}')`;
+            preview.style.transform = `rotate(${rotation}deg)`;
+        }
+
+        function createGrid() {
+            grid.innerHTML = '';
+            for (let i = 0; i < gridWidth * gridHeight; i++) {
+                const cell = document.createElement("div");
+                cell.className = "cell";
+
+                cell.addEventListener("mousedown", () => {
+                    isMouseDown = true;
+                    placeTile(cell);
+                });
+
+                cell.addEventListener("mouseenter", () => {
+                    if (isMouseDown) placeTile(cell);
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function placeTile(cell) {
+            cell.style.backgroundImage = `url('${tileImages[selectedTile]}')`;
+            cell.style.transform = `rotate(${rotation}deg)`;
+        }
+
+        document.addEventListener("mouseup", () => isMouseDown = false);
+
+        document.addEventListener("keydown", (event) => {
+            if (event.key === "r" || event.key === "R") {
+                rotation = (rotation + 90) % 360;
+                preview.style.transform = `rotate(${rotation}deg)`;
+            }
+        });
+
+        grid.addEventListener("mousemove", (event) => {
+            const rect = grid.getBoundingClientRect();
+            let x = Math.floor((event.clientX - rect.left) / 32) * 32;
+            let y = Math.floor((event.clientY - rect.top) / 32) * 32;
+
+            if (x >= 0 && x < 40 * 32 && y >= 0 && y < 30 * 32) {
+                preview.style.left = `${x}px`;
+                preview.style.top = `${y}px`;
+                preview.style.display = "block";
+            } else {
+                preview.style.display = "none";
+            }
+        });
+
+        function downloadImage() {
+            html2canvas(grid).then(canvas => {
+                const link = document.createElement('a');
+                link.download = 'level.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+
+        createGrid();
+        setTile(selectedTile);
+    </script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+</body>
+</html>
